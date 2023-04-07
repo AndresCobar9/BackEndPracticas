@@ -21,12 +21,13 @@ class LocalUser(Base):
     solicitudes = relationship("Solicitudes", back_populates="local_user", foreign_keys="Solicitudes.user_id")
     def serialize(self):
         return {
-            
+            'id':self.id,
             'name': self.name,
             'role': self.role,
             'gender': self.gender,
             'username': self.username,
             'email': self.email,
+            'isactive':self.isactive,
             'password':self.password,
             'created': self.created,
             'autorizado': self.isactive,
