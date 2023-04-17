@@ -9,7 +9,7 @@ from sqlalchemy import false, true ## Modulo Socket Flask
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import (create_access_token)
 from flask_jwt_extended import JWTManager
-from user_database_setup import LocalUser, Tareas
+from user_database_setup import LocalUser, Publicaciones, Tareas
 import jwt
 from datetime import datetime, timedelta
 from flask_jwt_extended import JWTManager
@@ -158,7 +158,7 @@ def addpublicacion():
     r_descripcion=request.get_json()['descripcion']
     r_creado=datetime.utcnow()
     r_area=request.get_json()['area']
-    new_tarea=Tareas(titulo=r_titulo, descripcion=r_descripcion, created=r_creado,area=r_area)
+    new_tarea=Publicaciones(titulo=r_titulo, descripcion=r_descripcion, created=r_creado,area=r_area)
     added=user_database_service.add_publicacion(new_tarea)  
     return jsonify({'result': added})
 

@@ -124,15 +124,16 @@ def add_publicacion(new_publicacion):
 
 ## Obtener todas las publicaciones 
 def get_publicaciones():
-        session=DBSession()
-        q=session.query(Publicaciones).all()
-        try:
-                session.close()
-                return jsonify(publicaciones=[publicacion.serialize() for publicacion in q])
-        except exc.SQLAlchemyError as e:
-                print(e)
-                return None     
-        
+    session = DBSession()
+    q = session.query(Publicaciones).all()
+    publicaciones = [publicacion.serialize() for publicacion in q]
+    try:
+        return {"publicaciones": publicaciones}
+    except exc.SQLAlchemyError as e:
+        print(e)
+        return None
+    finally:
+        session.close()
                 
         
 ## Obtener todas las publicaciones por area
