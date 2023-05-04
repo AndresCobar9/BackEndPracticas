@@ -1,15 +1,16 @@
 ## Imports
 from datetime import datetime, timedelta
+import json
 from socket import socket
 from xmlrpc.client import boolean ## Sockets de comunicacion
-from flask import Flask, jsonify, request, session  ## Import especifico de Flask
+from flask import Flask, Response, jsonify, request, session  ## Import especifico de Flask
 from flask_cors import CORS ## Import que permite el CORS origins de Flask
 from flask_socketio import SocketIO
 from sqlalchemy import false, true ## Modulo Socket Flask
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import (create_access_token)
 from flask_jwt_extended import JWTManager
-from user_database_setup import LocalUser, Publicaciones, Tareas
+from user_database_setup import LocalUser, Publicaciones, Solicitudes, Tareas
 import jwt
 from datetime import datetime, timedelta
 from flask_jwt_extended import JWTManager
@@ -36,7 +37,7 @@ def register():
     r_username=request.get_json()['username']
     r_email=request.get_json()['email']
     r_gender=request.get_json()['gender']
-    print(request.get_json()['password'])
+    r_area=request.get_json()['area']
     r_password=bcrypt.generate_password_hash(request.get_json()['password']).decode('utf-8')
     result=""
     
@@ -46,7 +47,7 @@ def register():
         print(result)
         return jsonify({'result': result})
 
-    new_user=LocalUser(name=r_name, username=r_username, email=r_email, password=r_password, gender = r_gender , role = 'user', isactive = True, created=datetime.utcnow())
+    new_user=LocalUser(name=r_name,area=r_area, username=r_username, email=r_email, password=r_password, gender = r_gender , role = 'Usuario', isactive = True, created=datetime.utcnow())
     added=user_database_service.add_user(new_user)
     if added is True:
         result="user successfully added"
@@ -73,6 +74,7 @@ def login():
                 'username': response_user['username'],
                 'name': response_user['name'],
                 'userrole': response_user['role'],
+                'area': response_user['area'],
                 'isactive': response_user['isactive']
             }
 
@@ -91,6 +93,20 @@ def login():
             result=jsonify({'error': 'Invalid username or password'})
     return result
 
+##  ----------------------------------------------------- Actualizar usuario -----------------------------------------------------
+@app.route('/user/update/<int:id>', methods=['PUT'])
+def updateuser(id):
+    updateObject = request.get_json()
+    print(updateObject)
+    res=user_database_service.update_user(id,updateObject)
+    return res
+
+@app.route('/user/updatepassword/<string:UserID>', methods=['PUT'])
+def UpdatePassword(UserID):
+   
+    r_password=bcrypt.generate_password_hash(request.get_json()['password']).decode('utf-8')
+    res=user_database_service.update_password(UserID,r_password)
+    return res
 
 
 ##  ----------------------------------------------------- Obtener todos los usuarios -----------------------------------------------------
@@ -108,20 +124,27 @@ def getuser(username):
     response_user=user_database_service.get_user(username)
     return jsonify(response_user)
 
+##  ----------------------------------------------------- Obtener Informacion de 1 Usario mediante id -----------------------------------------------------
+@app.route('/user/getid/<string:id>', methods=['GET'])
+def getuserid(id):
+    
+    response_user=user_database_service.get_userid(id)
+    return jsonify(response_user)
 
-##  ----------------------------------------------------- Agregar una tarea mediante el usuario -----------------------------------------------------
 
-@app.route('/user/addtarea/<string:username>', methods=['POST'])
-def addtarea(username):
-    print(username)
-    r_titulo=request.get_json()['titulo']
-    r_descripcion=request.get_json()['descripcion']
+##  ----------------------------------------------------- Agregar una tarea mediante el  id -----------------------------------------------------
+
+@app.route('/user/addtarea/<string:id>', methods=['POST'])
+def addtarea(id):
+    print(id)
+    r_titulo=request.get_json()['Tarea']
+    r_descripcion=request.get_json()['Descripcion']
     r_creado=datetime.utcnow()
-    r_entrega=request.get_json()['entrega']
+    r_entrega=request.get_json()['Fecha']
     r_estado=False
 
     new_tarea=Tareas(titulo=r_titulo, descripcion=r_descripcion, created=r_creado, entrega=r_entrega, isactive=r_estado)
-    added=user_database_service.add_tarea(new_tarea, username)  
+    added=user_database_service.add_tarea(new_tarea, id)  
     return jsonify({'result': added})
 
 
@@ -134,10 +157,19 @@ def gettarea(id):
     response_tarea=user_database_service.get_tarea(id)
     return jsonify(response_tarea)
 
+##  ----------------------------------------------------- Cambiar de estado tarea mediante su ID -----------------------------------------------------
+@app.route('/user/updatetarea/<int:id>', methods=['PUT'])
+def changetarea(id):
+    r_estado=request.get_json()['estado']
+    print(r_estado)
+    response_tarea=user_database_service.change_tarea(id, r_estado)
+    return jsonify(response_tarea)
 
 
-
-
+@app.route('/user/deletetarea/<int:id>', methods=['DELETE'])
+def deletetarea(id):
+    response_tarea=user_database_service.delete_tarea(id)
+    return jsonify(response_tarea)
 
 ## ----------------------------------------------------- Obtener todas las tareas -----------------------------------------------------
 @app.route('/user/gettareas', methods=['GET'])
@@ -148,7 +180,7 @@ def gettareas():
 ## ----------------------------------------------------- Obtener todas las tareas de un usuario -----------------------------------------------------
 @app.route('/user/gettareas/<string:username>', methods=['GET'])
 def gettareasuser(username):
-    response_tarea=user_database_service.get_tareas_user(username)
+    response_tarea=user_database_service.get_tareasuser(username)
     return jsonify(response_tarea)
 
 ##  ----------------------------------------------------- Agregar una Publicacion -----------------------------------------------------
@@ -158,7 +190,8 @@ def addpublicacion():
     r_descripcion=request.get_json()['descripcion']
     r_creado=datetime.utcnow()
     r_area=request.get_json()['area']
-    new_tarea=Publicaciones(titulo=r_titulo, descripcion=r_descripcion, created=r_creado,area=r_area)
+    r_autor=request.get_json()['autor']
+    new_tarea=Publicaciones(titulo=r_titulo, descripcion=r_descripcion, created=r_creado,area=r_area, autor = r_autor)
     added=user_database_service.add_publicacion(new_tarea)  
     return jsonify({'result': added})
 
@@ -172,8 +205,12 @@ def getpublicaciones():
 ## ----------------------------------------------------- Obtener una publicacion mediante su area -----------------------------------------------------
 @app.route('/user/getpublicacion/<string:area>', methods=['GET'])
 def getpublicacion(area):
-    response_tarea=user_database_service.get_publicacionesarea(area)
-    return jsonify(response_tarea)
+    response_tarea = user_database_service.get_publicacionesarea(area)
+    
+    if response_tarea is None:
+        return Response(json.dumps({"error": "No se encontraron publicaciones o hubo un error en la consulta"}), status=404, mimetype='application/json')
+    else:
+        return Response(json.dumps({"publicaciones": response_tarea}), status=200, mimetype='application/json')
 
 ##  ----------------------------------------------------- Borrar publicacion -----------------------------------------------------
 @app.route('/user/deletepublicacion/<int:id>', methods=['DELETE'])
@@ -185,14 +222,20 @@ def deletepublicacion(id):
 
 @app.route('/user/addsolicitud', methods=['POST'])
 def addsolicitud():
-    r_username=request.get_json()['username']
-    r_asunto=request.get_json()['asunto']
-    r_descripcion=request.get_json()['descripcion']
-    r_entrega = request.get_json()['entrega']
+    r_username=request.get_json()['Solicitante']
+    r_asunto=request.get_json()['Asunto']
+    r_descripcion=request.get_json()['Descripcion']
     r_creado=datetime.utcnow()
-    new_tarea=Tareas(asunto=r_asunto, descripcion=r_descripcion, created=r_creado,area=r_entrega,isactive = True)
+    new_tarea=Solicitudes(asunto=r_asunto, description=r_descripcion, created=r_creado,isactive = True)
     added=user_database_service.add_solicitud(new_tarea, r_username)  
     return jsonify({'result': added})
+
+## Obtener todas las solicitudes de un usuario por id
+@app.route('/user/getsolicitudes/<int:id>', methods=['GET'])
+def getsolicitudesuser(id):
+    response_tarea=user_database_service.get_solicitudesuser(id)
+    return jsonify(response_tarea)
+
 
 ## ----------------------------------------------------- Obtener todas las solicitudes -----------------------------------------------------
 @app.route('/user/getsolicitudes', methods=['GET'])
@@ -204,6 +247,14 @@ def getsolicitudes():
 @app.route('/user/getsolicitud/<int:id>', methods=['GET'])
 def getsolicitud(id):
     response_tarea=user_database_service.get_solicitud(id)
+    return jsonify(response_tarea)
+
+##  ----------------------------------------------------- Cambiar de estado de Solicitud mediante su ID -----------------------------------------------------
+@app.route('/user/updatesolicitud/<int:id>', methods=['PUT'])
+def changesolicitud(id):
+    r_estado=request.get_json()['estado']
+    print(r_estado)
+    response_tarea=user_database_service.change_solicitud(id, r_estado)
     return jsonify(response_tarea)
 
 

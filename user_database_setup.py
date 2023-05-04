@@ -13,6 +13,7 @@ class LocalUser(Base):
     role = Column(String(250), nullable=False)
     gender = Column(String(250), nullable=False)
     username = Column(String(250), nullable=False)
+    area= Column(String(250), nullable=False)
     email = Column(String(250), nullable=False)
     password = Column(String, nullable=False)
     created = Column(String, nullable=False)
@@ -22,6 +23,7 @@ class LocalUser(Base):
     def serialize(self):
         return {
             'id':self.id,
+            'area':self.area,
             'name': self.name,
             'role': self.role,
             'gender': self.gender,
@@ -46,6 +48,7 @@ class Tareas(Base):
     isactive = Column(Boolean, nullable = False)
     user_id = Column(Integer, ForeignKey('local_users.id'))
     local_user = relationship(LocalUser, back_populates="tareas")
+
     
     def serialize(self):
         return {
@@ -70,7 +73,7 @@ class Solicitudes(Base):
     local_user = relationship(LocalUser, back_populates="solicitudes")
     def serialize(self):
         return {
-            
+            'id':self.id,
             'asunto': self.asunto,
             'description': self.description,
             'created': self.created,
@@ -85,6 +88,7 @@ class Publicaciones(Base):
     titulo = Column(String(250), nullable=False)
     descripcion = Column(String(250), nullable=False)
     created = Column(String, nullable=False)
+    autor= Column(String, nullable=False)
     area = Column(String, nullable=False)
     def serialize(self):
         return {
@@ -92,7 +96,8 @@ class Publicaciones(Base):
             'titulo': self.titulo,
             'description': self.descripcion,
             'created': self.created,
-            'area': self.area
+            'area': self.area,
+            'autor': self.autor
         }
 	
 engine=create_engine('sqlite:///users.db')
