@@ -7,8 +7,10 @@ from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker, joinedload
 from user_database_setup import Base, LocalUser, Publicaciones, Solicitudes, Tareas
 
-engine=create_engine('sqlite:///users.db')
+engine=create_engine('mysql+pymysql://root:CuMdailiZj93qywqsJY9@containers-us-west-101.railway.app:8043/railway')
+
 Base.metadata.bind=engine
+Base.metadata.create_all(engine)
 DBSession=sessionmaker(bind=engine)
 
 ## Obtener todos los usuarios

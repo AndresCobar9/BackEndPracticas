@@ -15,8 +15,8 @@ class LocalUser(Base):
     username = Column(String(250), nullable=False)
     area= Column(String(250), nullable=False)
     email = Column(String(250), nullable=False)
-    password = Column(String, nullable=False)
-    created = Column(String, nullable=False)
+    password = Column(String(250), nullable=False)
+    created = Column(String(250), nullable=False)
     isactive = Column(Boolean, nullable = False)
     tareas = relationship("Tareas", back_populates="local_user", foreign_keys="Tareas.user_id")
     solicitudes = relationship("Solicitudes", back_populates="local_user", foreign_keys="Solicitudes.user_id")
@@ -43,8 +43,8 @@ class Tareas(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     titulo = Column(String(250), nullable=False)
     descripcion = Column(String(250), nullable=False)
-    created = Column(String, nullable=False)
-    entrega = Column(String, nullable=False)
+    created = Column(String(250), nullable=False)
+    entrega = Column(String(250), nullable=False)
     isactive = Column(Boolean, nullable = False)
     user_id = Column(Integer, ForeignKey('local_users.id'))
     local_user = relationship(LocalUser, back_populates="tareas")
@@ -66,8 +66,8 @@ class Solicitudes(Base):
     __tablename__ = 'solicitudes'
     id = Column(Integer, primary_key=True, autoincrement=True)
     asunto = Column(String(250), nullable=False)
-    description = Column(String(250), nullable=False)
-    created = Column(String, nullable=False)
+    description = Column(String(600), nullable=False)
+    created = Column(String(250), nullable=False)
     isactive = Column(Boolean, nullable = False)
     user_id = Column(Integer, ForeignKey('local_users.id'))
     local_user = relationship(LocalUser, back_populates="solicitudes")
@@ -87,9 +87,9 @@ class Publicaciones(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     titulo = Column(String(250), nullable=False)
     descripcion = Column(String(250), nullable=False)
-    created = Column(String, nullable=False)
-    autor= Column(String, nullable=False)
-    area = Column(String, nullable=False)
+    created = Column(String(250), nullable=False)
+    autor= Column(String(250), nullable=False)
+    area = Column(String(250), nullable=False)
     def serialize(self):
         return {
             'id':self.id,
@@ -100,5 +100,5 @@ class Publicaciones(Base):
             'autor': self.autor
         }
 	
-engine=create_engine('sqlite:///users.db')
+engine=create_engine('mysql+pymysql://root:CuMdailiZj93qywqsJY9@containers-us-west-101.railway.app:8043/railway')
 Base.metadata.create_all(engine)
