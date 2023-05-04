@@ -193,7 +193,7 @@ def change_tarea(r_id, r_estado):
         
 
         
-## Obtener todas las solicitudes de un usuario por id
+## Obtener todas las solicitudes de un usuario por ID
 def get_solicitudesuser(r_id):
     session = DBSession()
     q = session.query(LocalUser).options(
