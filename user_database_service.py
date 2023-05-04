@@ -308,17 +308,6 @@ def get_solicitudesuser(r_id):
                 print(e)
                 return None
         
-def get_solicitudesUN(r_username):
-        session=DBSession()
-        q=session.query(LocalUser).filter(r_username == LocalUser.username).first()
-        try:
-                session.close()
-                return jsonify(solicitudes=[solicitud.serialize() for solicitud in q.solicitudes])
-        except exc.SQLAlchemyError as e:
-                print(e)
-                return None
-        
-
 ## Obtener todas las solicitudes
 def get_solicitudes():
         session=DBSession()

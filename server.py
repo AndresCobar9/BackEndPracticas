@@ -243,9 +243,6 @@ def getsolicitudes():
     response_tarea=user_database_service.get_solicitudes()
     return jsonify(response_tarea)
 
-
-
-
 ## ----------------------------------------------------- Obtener una solicitud mediante su id -----------------------------------------------------
 @app.route('/user/getsolicitud/<int:id>', methods=['GET'])
 def getsolicitud(id):
