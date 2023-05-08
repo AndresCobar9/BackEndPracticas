@@ -13,7 +13,7 @@ from flask_jwt_extended import JWTManager
 from user_database_setup import LocalUser, Publicaciones, Solicitudes, Tareas
 import jwt
 from datetime import datetime, timedelta
-from flask_jwt_extended import JWTManager
+from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
 ## importa Endpoints
 import user_database_service
 
@@ -30,9 +30,10 @@ jwt_manager = JWTManager(app) # inicialización de JWTManager
 
 ##  ----------------------------------------------------- Registar Usuario -----------------------------------------------------
 
-@app.route('/user/register', methods=['POST'])
+@app.route('/user/register', methods=['POST']) 
+@jwt_required()
 def register():
-
+    current_user = get_jwt_identity()
     r_name=request.get_json()['name']
     r_username=request.get_json()['username']
     r_email=request.get_json()['email']
@@ -41,6 +42,9 @@ def register():
     r_password=bcrypt.generate_password_hash(request.get_json()['password']).decode('utf-8')
     result=""
     
+    if user_database_service.if_username_exists(r_username):
+        result="username already exists"
+        return jsonify({'result': result})
     
     if user_database_service.if_user_exists(r_email):
         result="user already exists"
@@ -60,48 +64,62 @@ def register():
 
 ##  ----------------------------------------------------- Login -----------------------------------------------------
 @app.route('/user/login', methods=['POST'])
+
 def login():
-    username=request.get_json()['username']
-    password=request.get_json()['password']
-    result=""
+    username = request.get_json()['username']
+    password = request.get_json()['password']
     
-    response_user=user_database_service.get_user(username)
+    response_user = user_database_service.get_user(username)
     print(response_user)
     if response_user:
         if bcrypt.check_password_hash(response_user['password'], password):
-            
-            identity={
-                'username': response_user['username'],
-                'name': response_user['name'],
-                'userrole': response_user['role'],
-                'area': response_user['area'],
-                'isactive': response_user['isactive']
-            }
+            if response_user['isactive']:
+                identity = {
+                    'username': response_user['username'],
+                    'name': response_user['name'],
+                    'userrole': response_user['role'],
+                    'area': response_user['area'],
+                    'isactive': response_user['isactive']
+                }
 
-            # Crear el token JWT con una duración de 1 hora
-            exp_time = datetime.utcnow() + timedelta(hours=1)
-            payload = {
-                'exp': exp_time,
-                'sub': response_user['id'],
-                'identity': identity
-            }
-            token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
-            
-            # Devolver el token JWT en la respuesta
-            return jsonify({'token': token, 'exp': exp_time.strftime('%Y-%m-%d %H:%M:%S'), 'identity': identity})
+                # Crear el token JWT con una duración de 1 hora
+                exp_time = datetime.utcnow() + timedelta(hours=1)
+                payload = {
+                    'exp': exp_time,
+                    'sub': response_user['id'],
+                    'identity': identity
+                }
+                token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+
+                # Devolver el token JWT en la respuesta
+                return jsonify({'token': token, 'exp': exp_time.strftime('%Y-%m-%d %H:%M:%S'), 'identity': identity})
+            else:
+                return jsonify({'error': 'Usuario deshabilitado'})
         else:
-            result=jsonify({'error': 'Invalid username or password'})
-    return result
+            return jsonify({'error': 'Credenciales incorrectas'})
+    else:
+        return jsonify({'error': 'Credenciales incorrectas'})
+
 
 ##  ----------------------------------------------------- Actualizar usuario -----------------------------------------------------
 @app.route('/user/update/<int:id>', methods=['PUT'])
+@jwt_required()
 def updateuser(id):
     updateObject = request.get_json()
-    print(updateObject)
+    if user_database_service.if_username_exists(updateObject['username']):
+        result="username already exists"
+        return jsonify({'result': result})
+    
+    if user_database_service.if_user_exists(updateObject['email']):
+        result="user already exists"
+        print(result)
+        return jsonify({'result': result})
+   
     res=user_database_service.update_user(id,updateObject)
     return res
 
 @app.route('/user/updatepassword/<string:UserID>', methods=['PUT'])
+@jwt_required()
 def UpdatePassword(UserID):
    
     r_password=bcrypt.generate_password_hash(request.get_json()['password']).decode('utf-8')
@@ -112,6 +130,7 @@ def UpdatePassword(UserID):
 ##  ----------------------------------------------------- Obtener todos los usuarios -----------------------------------------------------
 
 @app.route('/user/userslist', methods=['GET'])
+@jwt_required()
 def users():
     response_user=user_database_service.get_info()
     print(response_user)
@@ -119,6 +138,7 @@ def users():
 
 ##  ----------------------------------------------------- Obtener Informacion de 1 Usario mediante username -----------------------------------------------------
 @app.route('/user/get/<string:username>', methods=['GET'])
+@jwt_required()
 def getuser(username):
     
     response_user=user_database_service.get_user(username)
@@ -126,6 +146,7 @@ def getuser(username):
 
 ##  ----------------------------------------------------- Obtener Informacion de 1 Usario mediante id -----------------------------------------------------
 @app.route('/user/getid/<string:id>', methods=['GET'])
+@jwt_required()
 def getuserid(id):
     
     response_user=user_database_service.get_userid(id)
@@ -135,6 +156,7 @@ def getuserid(id):
 ##  ----------------------------------------------------- Agregar una tarea mediante el  id -----------------------------------------------------
 
 @app.route('/user/addtarea/<string:id>', methods=['POST'])
+@jwt_required()
 def addtarea(id):
     print(id)
     r_titulo=request.get_json()['Tarea']
@@ -153,12 +175,14 @@ def addtarea(id):
 
 ##  ----------------------------------------------------- Obtener una tarea mediante su ID -----------------------------------------------------
 @app.route('/user/gettarea/<int:id>', methods=['GET'])
+@jwt_required()
 def gettarea(id):
     response_tarea=user_database_service.get_tarea(id)
     return jsonify(response_tarea)
 
 ##  ----------------------------------------------------- Cambiar de estado tarea mediante su ID -----------------------------------------------------
 @app.route('/user/updatetarea/<int:id>', methods=['PUT'])
+@jwt_required()
 def changetarea(id):
     r_estado=request.get_json()['estado']
     print(r_estado)
@@ -167,24 +191,28 @@ def changetarea(id):
 
 
 @app.route('/user/deletetarea/<int:id>', methods=['DELETE'])
+@jwt_required()
 def deletetarea(id):
     response_tarea=user_database_service.delete_tarea(id)
     return jsonify(response_tarea)
 
 ## ----------------------------------------------------- Obtener todas las tareas -----------------------------------------------------
 @app.route('/user/gettareas', methods=['GET'])
+@jwt_required()
 def gettareas():
     response_tarea=user_database_service.get_tareas()
     return jsonify(response_tarea)
 
 ## ----------------------------------------------------- Obtener todas las tareas de un usuario -----------------------------------------------------
 @app.route('/user/gettareas/<string:username>', methods=['GET'])
+@jwt_required()
 def gettareasuser(username):
     response_tarea=user_database_service.get_tareasuser(username)
     return jsonify(response_tarea)
 
 ##  ----------------------------------------------------- Agregar una Publicacion -----------------------------------------------------
 @app.route('/user/addpublicacion', methods=['POST'])
+@jwt_required()
 def addpublicacion():
     r_titulo=request.get_json()['titulo']
     r_descripcion=request.get_json()['descripcion']
@@ -198,12 +226,14 @@ def addpublicacion():
 
 ## ----------------------------------------------------- Obtener todas las publicaciones -----------------------------------------------------
 @app.route('/user/getpublicaciones', methods=['GET'])
+@jwt_required()
 def getpublicaciones():
     response_tarea=user_database_service.get_publicaciones()
     return jsonify(response_tarea)
 
 ## ----------------------------------------------------- Obtener una publicacion mediante su area -----------------------------------------------------
 @app.route('/user/getpublicacion/<string:area>', methods=['GET'])
+@jwt_required()
 def getpublicacion(area):
     response_tarea = user_database_service.get_publicacionesarea(area)
     
@@ -214,6 +244,7 @@ def getpublicacion(area):
 
 ##  ----------------------------------------------------- Borrar publicacion -----------------------------------------------------
 @app.route('/user/deletepublicacion/<int:id>', methods=['DELETE'])
+@jwt_required()
 def deletepublicacion(id):
     response_tarea=user_database_service.delete_publicacion(id)
     return jsonify(response_tarea)
@@ -221,6 +252,7 @@ def deletepublicacion(id):
 ## ----------------------------------------------------- Agregar una solicitud -----------------------------------------------------
 
 @app.route('/user/addsolicitud', methods=['POST'])
+@jwt_required()
 def addsolicitud():
     r_username=request.get_json()['Solicitante']
     r_asunto=request.get_json()['Asunto']
@@ -232,6 +264,7 @@ def addsolicitud():
 
 ## Obtener todas las solicitudes de un usuario por id
 @app.route('/user/getsolicitudes/<int:id>', methods=['GET'])
+@jwt_required()
 def getsolicitudesuser(id):
     response_tarea=user_database_service.get_solicitudesuser(id)
     return jsonify(response_tarea)
@@ -239,18 +272,21 @@ def getsolicitudesuser(id):
 
 ## ----------------------------------------------------- Obtener todas las solicitudes -----------------------------------------------------
 @app.route('/user/getsolicitudes', methods=['GET'])
+@jwt_required()
 def getsolicitudes():
     response_tarea=user_database_service.get_solicitudes()
     return jsonify(response_tarea)
 
 ## ----------------------------------------------------- Obtener una solicitud mediante su id -----------------------------------------------------
 @app.route('/user/getsolicitud/<int:id>', methods=['GET'])
+@jwt_required()
 def getsolicitud(id):
     response_tarea=user_database_service.get_solicitud(id)
     return jsonify(response_tarea)
 
 ##  ----------------------------------------------------- Cambiar de estado de Solicitud mediante su ID -----------------------------------------------------
 @app.route('/user/updatesolicitud/<int:id>', methods=['PUT'])
+@jwt_required()
 def changesolicitud(id):
     r_estado=request.get_json()['estado']
     print(r_estado)

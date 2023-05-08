@@ -34,6 +34,16 @@ def if_user_exists(r_email):
                 return False
         else:
                 return True
+        
+## Detectar si el nombre de usuario esta registrado
+def if_username_exists(r_username):
+        session=DBSession()
+        q=session.query(LocalUser).filter(r_username == LocalUser.username).first()
+        session.close()
+        if q is None:
+                return False
+        else:
+                return True
 
 ## Agregar usuario
 def add_user(new_user):
