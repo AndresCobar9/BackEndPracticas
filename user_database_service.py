@@ -1,3 +1,4 @@
+import json
 import re
 import string
 from flask import jsonify, request
@@ -313,7 +314,8 @@ def get_solicitudesuser(r_id):
         q=session.query(LocalUser).filter(r_id == LocalUser.id).first()
         try:
                 session.close()
-                return jsonify(solicitudes=[solicitud.serialize() for solicitud in q.solicitudes])
+                solicitudes_json = [solicitud.serialize() for solicitud in q]
+                return json.loads(json.dumps({'solicitudes': solicitudes_json}))
         except exc.SQLAlchemyError as e:
                 print(e)
                 return None
@@ -321,12 +323,17 @@ def get_solicitudesuser(r_id):
 ## Obtener todas las solicitudes
 def get_solicitudes():
         session=DBSession()
-        q=session.query(Solicitudes).filter(Solicitudes).all()
+        q=session.query(Solicitudes).all()
         try:
                 session.close()
-                return jsonify(solicitudes=[solicitud.serialize() for solicitud in q])
+                solicitudes_json = [solicitud.serialize() for solicitud in q]
+
+                return jsonify(solicitudes_json)
         except:
                 return None
+        
+
+        
 ## Obtener una solicitud     
 def get_solicitud(r_id):
         session=DBSession()

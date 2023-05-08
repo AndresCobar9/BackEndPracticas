@@ -272,10 +272,10 @@ def getsolicitudesuser(id):
 
 ## ----------------------------------------------------- Obtener todas las solicitudes -----------------------------------------------------
 @app.route('/user/getsolicitudes', methods=['GET'])
-@jwt_required()
+
 def getsolicitudes():
     response_tarea=user_database_service.get_solicitudes()
-    return jsonify(response_tarea)
+    return response_tarea
 
 ## ----------------------------------------------------- Obtener una solicitud mediante su id -----------------------------------------------------
 @app.route('/user/getsolicitud/<int:id>', methods=['GET'])
