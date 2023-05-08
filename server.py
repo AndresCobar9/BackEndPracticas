@@ -106,14 +106,18 @@ def login():
 @jwt_required()
 def updateuser(id):
     updateObject = request.get_json()
-    if user_database_service.if_username_exists(updateObject['username']):
-        result="username already exists"
-        return jsonify({'result': result})
+    if 'name' in updateObject:
+        if user_database_service.if_username_exists(updateObject['username']):
+            result="username already exists"
+            return jsonify({'result': result})
+        
+    if 'email' in updateObject:
+
+        if user_database_service.if_user_exists(updateObject['email']):
+            result="user already exists"
+            print(result)
+            return jsonify({'result': result})
     
-    if user_database_service.if_user_exists(updateObject['email']):
-        result="user already exists"
-        print(result)
-        return jsonify({'result': result})
    
     res=user_database_service.update_user(id,updateObject)
     return res
