@@ -100,5 +100,5 @@ class Publicaciones(Base):
             'autor': self.autor
         }
 	
-engine=create_engine('mysql+pymysql://root:CuMdailiZj93qywqsJY9@containers-us-west-101.railway.app:8043/railway')
+engine=create_engine('sqlite:///users.db')
 Base.metadata.create_all(engine)

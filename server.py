@@ -31,7 +31,7 @@ jwt_manager = JWTManager(app) # inicialización de JWTManager
 ##  ----------------------------------------------------- Registar Usuario -----------------------------------------------------
 
 @app.route('/user/register', methods=['POST']) 
-@jwt_required()
+ 
 def register():
     current_user = get_jwt_identity()
     r_name=request.get_json()['name']
@@ -103,7 +103,7 @@ def login():
 
 ##  ----------------------------------------------------- Actualizar usuario -----------------------------------------------------
 @app.route('/user/update/<int:id>', methods=['PUT'])
-@jwt_required()
+ 
 def updateuser(id):
     updateObject = request.get_json()
     if 'name' in updateObject:
@@ -123,7 +123,7 @@ def updateuser(id):
     return res
 
 @app.route('/user/updatepassword/<string:UserID>', methods=['PUT'])
-@jwt_required()
+ 
 def UpdatePassword(UserID):
    
     r_password=bcrypt.generate_password_hash(request.get_json()['password']).decode('utf-8')
@@ -134,7 +134,7 @@ def UpdatePassword(UserID):
 ##  ----------------------------------------------------- Obtener todos los usuarios -----------------------------------------------------
 
 @app.route('/user/userslist', methods=['GET'])
-@jwt_required()
+
 def users():
     response_user=user_database_service.get_info()
     print(response_user)
@@ -142,7 +142,7 @@ def users():
 
 ##  ----------------------------------------------------- Obtener Informacion de 1 Usario mediante username -----------------------------------------------------
 @app.route('/user/get/<string:username>', methods=['GET'])
-@jwt_required()
+ 
 def getuser(username):
     
     response_user=user_database_service.get_user(username)
@@ -150,7 +150,7 @@ def getuser(username):
 
 ##  ----------------------------------------------------- Obtener Informacion de 1 Usario mediante id -----------------------------------------------------
 @app.route('/user/getid/<string:id>', methods=['GET'])
-@jwt_required()
+ 
 def getuserid(id):
     
     response_user=user_database_service.get_userid(id)
@@ -160,7 +160,7 @@ def getuserid(id):
 ##  ----------------------------------------------------- Agregar una tarea mediante el  id -----------------------------------------------------
 
 @app.route('/user/addtarea/<string:id>', methods=['POST'])
-@jwt_required()
+ 
 def addtarea(id):
     print(id)
     r_titulo=request.get_json()['Tarea']
@@ -179,14 +179,14 @@ def addtarea(id):
 
 ##  ----------------------------------------------------- Obtener una tarea mediante su ID -----------------------------------------------------
 @app.route('/user/gettarea/<int:id>', methods=['GET'])
-@jwt_required()
+ 
 def gettarea(id):
     response_tarea=user_database_service.get_tarea(id)
     return jsonify(response_tarea)
 
 ##  ----------------------------------------------------- Cambiar de estado tarea mediante su ID -----------------------------------------------------
 @app.route('/user/updatetarea/<int:id>', methods=['PUT'])
-@jwt_required()
+ 
 def changetarea(id):
     r_estado=request.get_json()['estado']
     print(r_estado)
@@ -195,28 +195,28 @@ def changetarea(id):
 
 
 @app.route('/user/deletetarea/<int:id>', methods=['DELETE'])
-@jwt_required()
+ 
 def deletetarea(id):
     response_tarea=user_database_service.delete_tarea(id)
     return jsonify(response_tarea)
 
 ## ----------------------------------------------------- Obtener todas las tareas -----------------------------------------------------
 @app.route('/user/gettareas', methods=['GET'])
-@jwt_required()
+ 
 def gettareas():
     response_tarea=user_database_service.get_tareas()
     return jsonify(response_tarea)
 
 ## ----------------------------------------------------- Obtener todas las tareas de un usuario -----------------------------------------------------
 @app.route('/user/gettareas/<string:username>', methods=['GET'])
-@jwt_required()
+ 
 def gettareasuser(username):
     response_tarea=user_database_service.get_tareasuser(username)
     return jsonify(response_tarea)
 
 ##  ----------------------------------------------------- Agregar una Publicacion -----------------------------------------------------
 @app.route('/user/addpublicacion', methods=['POST'])
-@jwt_required()
+ 
 def addpublicacion():
     r_titulo=request.get_json()['titulo']
     r_descripcion=request.get_json()['descripcion']
@@ -230,14 +230,14 @@ def addpublicacion():
 
 ## ----------------------------------------------------- Obtener todas las publicaciones -----------------------------------------------------
 @app.route('/user/getpublicaciones', methods=['GET'])
-@jwt_required()
+ 
 def getpublicaciones():
     response_tarea=user_database_service.get_publicaciones()
     return jsonify(response_tarea)
 
 ## ----------------------------------------------------- Obtener una publicacion mediante su area -----------------------------------------------------
 @app.route('/user/getpublicacion/<string:area>', methods=['GET'])
-@jwt_required()
+ 
 def getpublicacion(area):
     response_tarea = user_database_service.get_publicacionesarea(area)
     
@@ -248,7 +248,7 @@ def getpublicacion(area):
 
 ##  ----------------------------------------------------- Borrar publicacion -----------------------------------------------------
 @app.route('/user/deletepublicacion/<int:id>', methods=['DELETE'])
-@jwt_required()
+ 
 def deletepublicacion(id):
     response_tarea=user_database_service.delete_publicacion(id)
     return jsonify(response_tarea)
@@ -256,7 +256,7 @@ def deletepublicacion(id):
 ## ----------------------------------------------------- Agregar una solicitud -----------------------------------------------------
 
 @app.route('/user/addsolicitud', methods=['POST'])
-@jwt_required()
+ 
 def addsolicitud():
     r_username=request.get_json()['Solicitante']
     r_asunto=request.get_json()['Asunto']
@@ -268,7 +268,7 @@ def addsolicitud():
 
 ## Obtener todas las solicitudes de un usuario por id
 @app.route('/user/getsolicitudes/<int:id>', methods=['GET'])
-@jwt_required()
+ 
 def getsolicitudesuser(id):
     response_tarea=user_database_service.get_solicitudesuser(id)
     return jsonify(response_tarea)
@@ -283,14 +283,14 @@ def getsolicitudes():
 
 ## ----------------------------------------------------- Obtener una solicitud mediante su id -----------------------------------------------------
 @app.route('/user/getsolicitud/<int:id>', methods=['GET'])
-@jwt_required()
+ 
 def getsolicitud(id):
     response_tarea=user_database_service.get_solicitud(id)
     return jsonify(response_tarea)
 
 ##  ----------------------------------------------------- Cambiar de estado de Solicitud mediante su ID -----------------------------------------------------
 @app.route('/user/updatesolicitud/<int:id>', methods=['PUT'])
-@jwt_required()
+ 
 def changesolicitud(id):
     r_estado=request.get_json()['estado']
     print(r_estado)
